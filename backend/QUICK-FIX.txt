@@ -1,0 +1,125 @@
+╔══════════════════════════════════════════════════════════════╗
+║  🚀 QUICK FIX - Feed Tidak Tampil (GET Request Issue)      ║
+╚══════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────┐
+│ MASALAH                                                      │
+├──────────────────────────────────────────────────────────────┤
+│ ✅ POST berfungsi (data masuk ke spreadsheet)               │
+│ ❌ GET tidak berfungsi (feed tidak tampil)                  │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ SOLUSI CEPAT (5 MENIT)                                       │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│ 1️⃣ BUKA APPS SCRIPT                                          │
+│    https://script.google.com                                │
+│                                                              │
+│ 2️⃣ COPY KODE BARU                                            │
+│    File: backend/code-optimized.gs                          │
+│    → Copy SEMUA isi file                                    │
+│    → Paste ke Apps Script (replace semua)                   │
+│                                                              │
+│ 3️⃣ TEST DULU                                                 │
+│    → Pilih function: testGetRequest                         │
+│    → Klik Run (▶️)                                           │
+│    → Lihat log: harus ada "✅ TEST PASSED"                  │
+│                                                              │
+│ 4️⃣ DEPLOY ULANG                                              │
+│    → Deploy > Manage deployments                            │
+│    → Klik ⚙️ di deployment aktif                            │
+│    → Version: "New version"                                 │
+│    → Deploy                                                 │
+│                                                              │
+│ 5️⃣ TEST DI BROWSER                                           │
+│    Buka: YOUR_DEPLOYMENT_URL?page=1&limit=10                │
+│    Harus muncul JSON dengan "feed": [...]                   │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ YANG SUDAH DIPERBAIKI                                        │
+├──────────────────────────────────────────────────────────────┤
+│ ✅ Enhanced error handling di doGet                         │
+│ ✅ Robust null checks di getOptimizedFeedData               │
+│ ✅ Filter empty rows                                        │
+│ ✅ Detailed logging untuk debugging                         │
+│ ✅ Always return valid JSON (even on error)                 │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ DEBUGGING TIPS                                               │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│ 🔍 Cek Apps Script Logs:                                    │
+│    Apps Script > Executions (⏱️)                            │
+│    Lihat error dari GET request                             │
+│                                                              │
+│ 🔍 Cek Browser Console:                                     │
+│    F12 > Console                                            │
+│    Lihat error fetch/network                                │
+│                                                              │
+│ 🔍 Cek Network Tab:                                         │
+│    F12 > Network                                            │
+│    Cari request ke Apps Script                              │
+│    Lihat Response                                           │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ TEST FUNCTIONS (Jalankan di Apps Script)                    │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│ testGetRequest()           → Test doGet function            │
+│ testGetOptimizedFeedData() → Test data fetching             │
+│ clearAllCache()            → Clear cache                    │
+│ runAllTests()              → Run semua test                 │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ EXPECTED RESPONSE                                            │
+├──────────────────────────────────────────────────────────────┤
+│ {                                                            │
+│   "feed": [                                                  │
+│     {                                                        │
+│       "timestamp": "2026-02-06...",                          │
+│       "company": "Company A",                                │
+│       "location": "Location A",                              │
+│       "category": "Unsafe Action",                           │
+│       "description": "...",                                  │
+│       "recommendation": "...",                               │
+│       "fotoUrl": "https://drive.google.com/...",             │
+│       "dokumenUrl": "",                                      │
+│       "reportedBy": "username",                              │
+│       "assignTo": "username",                                │
+│       "status": "Open"                                       │
+│     }                                                        │
+│   ],                                                         │
+│   "stats": {                                                 │
+│     "total": 10,                                             │
+│     "unsafe": 5,                                             │
+│     "safe": 3,                                               │
+│     "nearmiss": 2                                            │
+│   },                                                         │
+│   "hasMore": true                                            │
+│ }                                                            │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ JIKA MASIH ERROR                                             │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│ 1. Cek nama sheet: "observation_data" (line 9)              │
+│ 2. Cek SPREADSHEET_ID benar (line 8)                        │
+│ 3. Pastikan ada data di spreadsheet                         │
+│ 4. Deployment settings:                                     │
+│    - Execute as: Me                                         │
+│    - Who has access: Anyone                                 │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+
+╔══════════════════════════════════════════════════════════════╗
+║  📚 Dokumentasi Lengkap: PERBAIKAN-GET-REQUEST.md           ║
+╚══════════════════════════════════════════════════════════════╝
