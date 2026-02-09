@@ -50,6 +50,11 @@
   .btn-press:active {
     @apply scale-95;
   }
+
+  .hd-image {
+    image-rendering: -webkit-optimize-contrast;
+    @apply object-cover w-full h-full;
+  }
 }
 
 @layer utilities {
@@ -106,6 +111,20 @@
 
 .animate-toast-progress {
   animation: toastProgress 3s linear forwards;
+}
+
+.animate-spin-fast {
+  animation: spin 0.5s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Custom Scrollbar */

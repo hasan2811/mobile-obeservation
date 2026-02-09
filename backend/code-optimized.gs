@@ -387,33 +387,37 @@ function updateTaskOptimized(data) {
   
   if (!sheet) return { result: 'error', message: 'Sheet not found' };
 
-  // Cari row berdasarkan timestamp (Column A / Index 0)
-  // Kita load kolom A saja untuk pencarian cepat
   const lastRow = sheet.getLastRow();
-  const timestamps = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat(); // Flatten to 1D array
+  if (lastRow <= 1) return { result: 'error', message: 'No data to update' };
+
+  // Load Column A (Timestamps)
+  const timestamps = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
   
-  // Convert timestamp to string for comparison matches
-  const targetTimestamp = String(data.timestamp);
+  // Convert target to Numeric Time for robust matching
+  const targetTime = new Date(data.timestamp).getTime();
   
-  // Find index (tambah 2 karena header row + 0-index)
-  // Perlu format date yang sama, amannya pakai ISO string atau exact string match jika format konsisten
-  // Di sini kita asumsikan client kirim exact string yang didapat dari GET
-  const rowIndex = timestamps.findIndex(t => String(t) === targetTimestamp);
+  // Find index using time comparison (tolerance 2s for precision)
+  const rowIndex = timestamps.findIndex(t => {
+    if (!t) return false;
+    const tTime = new Date(t).getTime();
+    return Math.abs(tTime - targetTime) < 2000;
+  });
 
   if (rowIndex === -1) {
-    return { result: 'error', message: 'Task not found' };
+    Logger.log('❌ Task matching failed for: ' + data.timestamp);
+    return { result: 'error', message: 'Task matching failed. Reference not found.' };
   }
 
-  const rowNumber = rowIndex + 2; // +1 for header, +1 for 0-based index
+  const rowNumber = rowIndex + 2;
 
-  // Handle Photo Upload if exists
+  // Handle Proof Photo Upload
   let proofUrl = '';
-  if (data.proofPhoto) {
+  if (data.proofPhoto && data.proofPhoto.data) {
     try {
       const fotoBlob = Utilities.newBlob(
         Utilities.base64Decode(data.proofPhoto.data),
         data.proofPhoto.mimeType,
-        data.proofPhoto.name
+        'proof_' + rowIndex + '_' + data.proofPhoto.name
       );
       const folder = DriveApp.getFolderById(FOLDER_ID);
       const file = folder.createFile(fotoBlob);
@@ -424,23 +428,25 @@ function updateTaskOptimized(data) {
     }
   }
 
-  // Update Status (Column K / Index 11)
-  sheet.getRange(rowNumber, 11).setValue(data.status); // Column 11 is Status
-
-  // Optional: Update Action Notes & Proof di kolom baru (misal L, M, N)
-  // Structure: [..., Status, ActionBy, ActionDate, ActionNotes, ProofUrl]
-  // L=12, M=13, N=14, O=15
+  // UPDATE IN-PLACE (Same Row)
+  // Status (Col 11), ActionBy (Col 12), ActionDate (Col 13), ActionNotes (Col 14), ProofUrl (Col 15)
+  sheet.getRange(rowNumber, 11).setValue(data.status);
   sheet.getRange(rowNumber, 12).setValue(data.actionBy);
   sheet.getRange(rowNumber, 13).setValue(new Date());
   sheet.getRange(rowNumber, 14).setValue(data.notes);
+  
   if (proofUrl) {
     sheet.getRange(rowNumber, 15).setValue(proofUrl);
   }
 
-  // Clear cache agar update terlihat
+  // Clear cache for instant visibility
   clearCache();
 
-  return { result: 'success', message: 'Task updated successfully' };
+  return { 
+    result: 'success', 
+    message: 'Action recorded successfully in row ' + rowNumber,
+    proofUrl: proofUrl 
+  };
 }
 
 // ============================================

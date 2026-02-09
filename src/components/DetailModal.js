@@ -1,18 +1,8 @@
-import React from 'react';
 import { X, Maximize2 } from 'lucide-react';
 import ObservationCard from './ObservationCard';
+import { getHDImageUrl } from '../utils/imageUtils';
 
-const getDirectImageUrl = (url) => {
-    if (!url) return null;
-    if (typeof url !== 'string') return null;
-    if (url.startsWith('blob:')) return url;
-    if (url.includes('googleusercontent.com')) return url;
-    if (url.includes('drive.google.com')) {
-        const idMatch = url.match(/id=([^&]+)/) || url.match(/\/d\/([^/]+)/);
-        if (idMatch) return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
-    }
-    return url;
-};
+
 
 const DetailModal = ({ obs, currentUser, onClose, onTakeAction, onReview }) => {
     if (!obs) return null;
@@ -21,7 +11,7 @@ const DetailModal = ({ obs, currentUser, onClose, onTakeAction, onReview }) => {
     const isCreator = obs.creatorName === currentUser.username;
 
     // Logic to extract image URL (same as FeedCard)
-    const imageUrl = getDirectImageUrl(obs.raw?.fotoUrl || obs.raw?.gambar || obs.raw?.files?.[0]?.url);
+    const imageUrl = getHDImageUrl(obs.raw?.fotoUrl || obs.raw?.gambar || obs.raw?.files?.[0]?.url);
 
     return (
         <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in py-4 sm:py-0 overflow-y-auto">
@@ -43,8 +33,11 @@ const DetailModal = ({ obs, currentUser, onClose, onTakeAction, onReview }) => {
                         <div className="relative w-full h-72 sm:h-80 bg-[var(--bg-main)] group">
                             <img
                                 src={imageUrl}
-                                className="w-full h-full object-cover"
-                                alt="Evidence"
+                                referrerPolicy="no-referrer"
+                                crossOrigin="anonymous"
+                                className="hd-image"
+                                alt={obs.description || "Evidence"}
+                                loading="eager"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] to-transparent opacity-80"></div>
                             <div className="absolute bottom-0 left-0 p-6 z-10">

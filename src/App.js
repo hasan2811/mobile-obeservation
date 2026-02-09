@@ -14,9 +14,10 @@ import Profile from './views/Profile';
 import Toast from './components/Toast';
 import SuccessCelebration from './components/SuccessCelebration';
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz3o-973C9Bzhovhljs63_Ch_3rxc2u_FwPL-aDN9EHLV7-8dscLpCFHJTZEFv2-0Ed4w/exec";
-const API_KEY = "AIzaSyAZ2dAYFm77Uyw0ye6Qcdoy5x5ankeAgPc";
-const GEMINI_MODEL = "gemini-2.5-flash-preview-09-2025";
+const WEB_APP_URL = process.env.REACT_APP_WEB_APP_URL || "";
+const API_KEY = process.env.REACT_APP_GEMINI_API_KEY || "";
+const GEMINI_MODEL = process.env.REACT_APP_GEMINI_MODEL || "gemini-2.0-flash";
+
 
 const formatDate = (dateString) => {
   if (!dateString) return "";
@@ -37,6 +38,7 @@ export default function App() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -50,6 +52,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [isGeneratingRecommendation, setIsGeneratingRecommendation] = useState(false);
   const [isAnalyzingPhoto, setIsAnalyzingPhoto] = useState(false);
+  const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
 
   // Theme State
   const [isDark, setIsDark] = useState(() => {
@@ -79,14 +82,21 @@ export default function App() {
     if (user) {
       fetchFeed(1, false);
       fetchUsers();
+
+      // Real-time Polling (Every 5 seconds for instant feel)
+      const pollInterval = setInterval(() => {
+        fetchFeed(1, false, true); // Silent refresh
+      }, 5000);
+
+      return () => clearInterval(pollInterval);
     }
   }, [user]);
 
   // --- API CALLS ---
 
-  const fetchFeed = async (targetPage = 1, isAppending = false) => {
+  const fetchFeed = async (targetPage = 1, isAppending = false, silent = false) => {
     if (isAppending) setLoadingMore(true);
-    else setLoading(true);
+    else if (!silent) setLoading(true);
 
     try {
       const response = await fetch(`${WEB_APP_URL}?page=${targetPage}&limit=10`, { redirect: "follow" });
@@ -136,9 +146,6 @@ export default function App() {
         setObservations(prev => [...prev, ...mapped]);
       } else {
         setObservations(mapped);
-        if (mapped.length > 0) {
-          generateInsight(mapped); // Generate insight on first load
-        }
       }
 
       if (newStats) setStats(newStats);
@@ -178,18 +185,39 @@ export default function App() {
 
   const callGemini = async (prompt, systemInstruction = "", retries = 3, delay = 1000) => {
     try {
+      const body = {
+        contents: [{ parts: [{ text: prompt }] }]
+      };
+
+      if (systemInstruction) {
+        body.systemInstruction = { parts: [{ text: systemInstruction }] };
+      }
+
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${API_KEY}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          systemInstruction: { parts: [{ text: systemInstruction }] }
-        })
+        body: JSON.stringify(body)
       });
-      if (!response.ok) throw new Error('API Error');
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Gemini Details:", errorData);
+
+        // Handle Rate Limit (Too Many Requests)
+        if (response.status === 429) {
+          if (retries > 0) {
+            console.warn(`Rate limit hit. Retrying in ${delay * 2}ms...`);
+            await new Promise(r => setTimeout(r, delay * 2));
+            return callGemini(prompt, systemInstruction, retries - 1, delay * 3);
+          }
+          throw new Error("RATE_LIMIT_EXCEEDED");
+        }
+
+        throw new Error(`API Error: ${response.status}`);
+      }
       const result = await response.json();
       return result.candidates?.[0]?.content?.parts?.[0]?.text;
     } catch (error) {
+      if (error.message === "RATE_LIMIT_EXCEEDED") throw error;
       if (retries > 0) {
         await new Promise(r => setTimeout(r, delay));
         return callGemini(prompt, systemInstruction, retries - 1, delay * 2);
@@ -199,15 +227,24 @@ export default function App() {
   };
 
   const generateInsight = async (data) => {
-    if (!data.length || aiInsight) return;
+    if (!data.length || isGeneratingInsight) return;
+    setIsGeneratingInsight(true);
     try {
-      const text = data.slice(0, 5).map(i => i.title + ": " + i.description).join("\n");
-      const insight = await callGemini(
-        `Analyze these HSE reports and give 1 short executive summary sentence:\n${text}`,
-        "HSE Expert Analyst"
+      const summary = data.map(d => `${d.category}: ${d.description}`).join('\n');
+      const result = await callGemini(
+        `Based on these reports, provide a 1-sentence executive safety summary: \n${summary}`,
+        "You are an expert HSSE officer. Be concise and professional. Do not use markdown."
       );
-      if (insight) setAiInsight(insight);
-    } catch (e) { console.error("AI Error", e); }
+      if (result) setAiInsight(result);
+    } catch (e) {
+      if (e.message === "RATE_LIMIT_EXCEEDED") {
+        setToast({ message: "AI is busy. Please wait 1 minute.", type: "info" });
+      } else {
+        console.error("AI Insight Error", e);
+      }
+    } finally {
+      setIsGeneratingInsight(false);
+    }
   };
 
   const improveRecommendation = async (description) => {
@@ -221,7 +258,11 @@ export default function App() {
       const improved = await callGemini(prompt, "HSE Technical Writer");
       return improved?.trim();
     } catch (e) {
-      setToast({ message: "AI Polish Failed", type: "error" });
+      if (e.message === "RATE_LIMIT_EXCEEDED") {
+        setToast({ message: "AI Limit reached. Try again in 1 minute.", type: "info" });
+      } else {
+        setToast({ message: "AI Polish Failed", type: "error" });
+      }
       return null;
     } finally {
       setIsGeneratingRecommendation(false);
@@ -240,7 +281,7 @@ export default function App() {
       });
       const base64 = await base64Promise;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${API_KEY}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -260,8 +301,12 @@ export default function App() {
         return JSON.parse(jsonMatch[0]);
       }
     } catch (e) {
-      console.error("AI Analysis Error", e);
-      setToast({ message: "AI Analysis Failed", type: "error" });
+      if (e.message === "RATE_LIMIT_EXCEEDED") {
+        setToast({ message: "AI is resting. Please wait 1 minute.", type: "info" });
+      } else {
+        console.error("AI Analysis Error", e);
+        setToast({ message: "AI Analysis Failed", type: "error" });
+      }
     } finally {
       setIsAnalyzingPhoto(false);
     }
@@ -357,6 +402,7 @@ export default function App() {
     setActiveTab('activity'); // Redirect to Activity tab to see their new post
 
     // Backend Call
+    setIsSubmitting(true);
     try {
       await fetch(WEB_APP_URL, {
         method: 'POST',
@@ -368,6 +414,8 @@ export default function App() {
       fetchFeed(1, false);
     } catch (e) {
       setToast({ message: "Saved locally, sync failed", type: "error" });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -379,6 +427,24 @@ export default function App() {
   const handleActionSubmit = async ({ timestamp, status, notes, photo }) => {
     setActionModal({ show: false, obs: null });
     setLoading(true);
+    setIsSubmitting(true);
+
+    // OPTIMISTIC UPDATE: Update local state immediately
+    setObservations(prev => prev.map(o => {
+      if (o.id === timestamp) {
+        return {
+          ...o,
+          status: 'Pending',
+          history: [...o.history, {
+            action: 'Action Taken (Syncing...)',
+            timestamp: 'Just now',
+            user: user.username,
+            comment: notes
+          }]
+        };
+      }
+      return o;
+    }));
 
     let proofPhotoData = null;
     if (photo) {
@@ -414,6 +480,7 @@ export default function App() {
       setToast({ message: "Failed to update status", type: "error" });
     } finally {
       setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -421,8 +488,23 @@ export default function App() {
     const obsId = reviewModal.obsId;
     const newStatus = action === 'close' ? 'Closed' : 'Open';
 
-    // Optimistic
-    setObservations(prev => prev.map(o => o.id === obsId ? { ...o, status: newStatus } : o));
+    // OPTIMISTIC UPDATE: Instant state change
+    setObservations(prev => prev.map(o => {
+      if (o.id === obsId) {
+        return {
+          ...o,
+          status: newStatus,
+          history: [...o.history, {
+            action: action === 'close' ? 'Verified & Closed' : 'Reopened',
+            timestamp: 'Just now',
+            user: user.username,
+            comment: comment || `Rating: ${rating} Stars`
+          }]
+        };
+      }
+      return o;
+    }));
+
     setReviewModal({ show: false, obsId: null });
     // Also close the detail view if it was open for this item
     if (selectedObs && selectedObs.id === obsId) {
@@ -440,6 +522,7 @@ export default function App() {
         }),
         redirect: 'follow'
       });
+      fetchFeed(1, false, true); // Silent refresh to update status
     } catch (e) { console.error(e); }
   };
 
@@ -459,7 +542,10 @@ export default function App() {
         <Dashboard
           user={user}
           stats={stats}
+          observations={observations}
           aiInsight={aiInsight}
+          isGeneratingInsight={isGeneratingInsight}
+          onGenerateInsight={() => generateInsight(observations)}
           onTaskClick={() => setActiveTab('tasks')}
           onActivityClick={() => setActiveTab('activity')}
           onFeedClick={() => setActiveTab('feed')}
@@ -577,8 +663,10 @@ export default function App() {
 
       {loading && !showSuccess && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[var(--bg-card)]/80 text-[var(--text-primary)] px-5 py-2.5 rounded-full flex items-center gap-2.5 text-xs backdrop-blur-md border border-[var(--border-color)] shadow-2xl transition-colors">
-          <Loader2 size={14} className="animate-spin text-blue-500" />
-          <span className="font-black tracking-[0.2em] uppercase text-[9px] opacity-80">Syncing System</span>
+          <Loader2 size={14} className={`${isSubmitting ? 'animate-spin-fast text-blue-400' : 'animate-spin text-blue-500'}`} />
+          <span className="font-black tracking-[0.2em] uppercase text-[9px] opacity-80">
+            {isSubmitting ? 'Syncing Data' : 'Syncing System'}
+          </span>
         </div>
       )}
 

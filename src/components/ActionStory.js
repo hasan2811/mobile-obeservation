@@ -1,5 +1,5 @@
-import React from 'react';
 import { Plus, User, Clock, RefreshCw, Check, Star } from 'lucide-react';
+import { getHDImageUrl } from '../utils/imageUtils';
 
 const ActionStory = ({ history }) => {
     // Fallback if history is undefined or empty
@@ -43,13 +43,12 @@ const ActionStory = ({ history }) => {
                             {item.proofUrl && (
                                 <div className="mt-2 rounded-lg overflow-hidden border border-white/5">
                                     <img
-                                        src={
-                                            item.proofUrl.includes('drive.google.com')
-                                                ? `https://lh3.googleusercontent.com/d/${item.proofUrl.match(/id=([^&]+)/)?.[1] || item.proofUrl.match(/\/d\/([^/]+)/)?.[1]}`
-                                                : item.proofUrl
-                                        }
+                                        src={getHDImageUrl(item.proofUrl)}
+                                        referrerPolicy="no-referrer"
+                                        crossOrigin="anonymous"
                                         alt="Action Proof"
-                                        className="w-full h-32 object-cover"
+                                        className="hd-image !h-32"
+                                        loading="lazy"
                                     />
                                 </div>
                             )}

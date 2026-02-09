@@ -1,17 +1,7 @@
-import React from 'react';
 import { MapPin, Clock, User, ArrowRight } from 'lucide-react';
+import { getHDImageUrl } from '../utils/imageUtils';
 
-const getDirectImageUrl = (url) => {
-    if (!url) return null;
-    if (typeof url !== 'string') return null;
-    if (url.startsWith('blob:')) return url;
-    if (url.includes('googleusercontent.com')) return url;
-    if (url.includes('drive.google.com')) {
-        const idMatch = url.match(/id=([^&]+)/) || url.match(/\/d\/([^/]+)/);
-        if (idMatch) return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
-    }
-    return url;
-};
+
 
 const FeedCard = ({ obs, onClick }) => {
     // Check if obs.raw.files exists, else fall back to fotoUrl or standard method
@@ -24,7 +14,7 @@ const FeedCard = ({ obs, onClick }) => {
     }
 
     // Fallback: Try to find image url in raw data
-    imageUrl = getDirectImageUrl(obs.raw?.fotoUrl || obs.raw?.gambar || obs.raw?.files?.[0]?.url);
+    imageUrl = getHDImageUrl(obs.raw?.fotoUrl || obs.raw?.gambar || obs.raw?.files?.[0]?.url);
 
     // If no image, maybe show a gradient placeholder or a pattern
     const hasImage = !!imageUrl;
@@ -39,8 +29,10 @@ const FeedCard = ({ obs, onClick }) => {
                     <>
                         <img
                             src={imageUrl}
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                            alt={obs.title}
+                            referrerPolicy="no-referrer"
+                            crossOrigin="anonymous"
+                            className="hd-image absolute inset-0 transition-transform duration-700 group-hover:scale-110"
+                            alt={obs.description || obs.title}
                             loading="lazy"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/40 to-transparent opacity-90" />
