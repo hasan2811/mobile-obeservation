@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { X, Upload, Camera, Sparkles, Loader2 } from 'lucide-react';
+import SmartAssigneePicker, { recordAssignment } from './SmartAssigneePicker';
 
-const COMPANIES = ["Company A", "Company B", "Company C", "Company D", "Company E"];
-const LOCATIONS = ["Location A", "Location B", "Location C", "Location D", "Location E"];
+const DEFAULT_COMPANIES = ["Company A", "Company B", "Company C", "Company D", "Company E"];
+const DEFAULT_LOCATIONS = ["Location A", "Location B", "Location C", "Location D", "Location E"];
 const CATEGORIES = ["Unsafe Action", "Unsafe Condition", "Safe Action", "Safe Condition", "Nearmiss"];
 const HAZARD_TYPES = [
     "Tools & Equipment", "Lifting & Rigging", "Life Saving Rules", "Permit to Work",
@@ -10,7 +11,13 @@ const HAZARD_TYPES = [
     "Work at Height", "Electrical Safety", "Fire Safety", "Manual Handling", "Excavation"
 ];
 
+// Read from localStorage settings (set by Profile Settings)
+const getCompanies = () => { try { const s = localStorage.getItem('hsse_companies'); return s ? JSON.parse(s) : DEFAULT_COMPANIES; } catch { return DEFAULT_COMPANIES; } };
+const getLocations = () => { try { const s = localStorage.getItem('hsse_locations'); return s ? JSON.parse(s) : DEFAULT_LOCATIONS; } catch { return DEFAULT_LOCATIONS; } };
+
 const CreateModal = ({ users, currentUser, onClose, onCreate, improveRecommendation, isGeneratingRecommendation, analyzePhoto, isAnalyzingPhoto, autofillFromDescription }) => {
+    const COMPANIES = getCompanies();
+    const LOCATIONS = getLocations();
     const [formData, setFormData] = useState({
         company: COMPANIES[0],
         location: LOCATIONS[0],
@@ -72,6 +79,8 @@ const CreateModal = ({ users, currentUser, onClose, onCreate, improveRecommendat
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        // Record assignment frequency for smart sorting
+        if (formData.assignTo) recordAssignment(formData.assignTo);
         onCreate(formData);
     };
 
@@ -171,19 +180,12 @@ const CreateModal = ({ users, currentUser, onClose, onCreate, improveRecommendat
 
                     <div>
                         <label className="text-[10px] text-[var(--text-secondary)] uppercase font-black tracking-widest block mb-2">Assign To</label>
-                        <div className="relative">
-                            <select
-                                name="assignTo"
-                                className="w-full bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl p-3 text-[var(--text-primary)] focus:border-blue-500/50 focus:outline-none transition-all appearance-none cursor-pointer"
-                                value={formData.assignTo}
-                                onChange={handleChange}
-                            >
-                                {users.filter(u => u.id !== currentUser.id).map(u => (
-                                    <option key={u.id} value={u.id}>{u.name}</option>
-                                ))}
-                            </select>
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] pointer-events-none text-xs">▼</div>
-                        </div>
+                        <SmartAssigneePicker
+                            users={users}
+                            currentUser={currentUser}
+                            value={formData.assignTo}
+                            onChange={(id) => setFormData(prev => ({ ...prev, assignTo: id }))}
+                        />
                     </div>
 
                     {/* File Uploads */}
@@ -241,7 +243,11 @@ const CreateModal = ({ users, currentUser, onClose, onCreate, improveRecommendat
                 </form>
 
                 <div className="mt-4 pt-4 border-t border-[var(--border-color)] shrink-0">
-                    <button onClick={handleSubmit} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-600/20 active:scale-95 transition-all uppercase tracking-widest">
+                    <button
+                        onClick={handleSubmit}
+                        className="w-full text-white font-black py-4 rounded-xl shadow-xl active:scale-95 transition-all uppercase tracking-widest text-sm"
+                        style={{ background: 'linear-gradient(135deg, #f28367 0%, #ff5282 100%)', boxShadow: '0 8px 24px rgba(255,82,130,0.3)' }}
+                    >
                         Submit Report
                     </button>
                 </div>

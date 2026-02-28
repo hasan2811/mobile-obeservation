@@ -35,7 +35,7 @@ const Dashboard = ({ user, stats, observations, aiInsight, isGeneratingInsight, 
     }, [observations, daysRange]);
 
     return (
-        <div className="p-5 pb-24 space-y-6 animate-fade-in text-[var(--text-primary)] transition-colors duration-300">
+        <div className="p-5 pb-6 space-y-6 animate-fade-in text-[var(--text-primary)] transition-colors duration-300">
             <header className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-500 tracking-tight">Hi, {firstName}</h1>

@@ -1,38 +1,9 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
   <defs>
-    <linearGradient id="shield_grad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#3b82f6" />
-      <stop offset="1" stop-color="#1e3a8a" />
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f28367" />
+      <stop offset="100%" stop-color="#ff5282" />
     </linearGradient>
-    <linearGradient id="inner_grad" x1="256" y1="128" x2="256" y2="384" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#10b981" />
-      <stop offset="1" stop-color="#059669" />
-    </linearGradient>
-    <filter id="shadow" x="0" y="0" width="512" height="512" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-      <feOffset dy="4"/>
-      <feGaussianBlur stdDeviation="8"/>
-      <feComposite in2="hardAlpha" operator="out"/>
-      <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
-      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_1"/>
-      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_1" result="shape"/>
-    </filter>
   </defs>
-  
-  <!-- Outer Shield Glow -->
-  <circle cx="256" cy="256" r="220" fill="#3b82f6" fill-opacity="0.1" />
-  
-  <!-- Main Shield Shape -->
-  <path d="M256 64C200 64 128 96 128 96V256C128 352 192 416 256 448C320 416 384 352 384 256V96C384 96 312 64 256 64Z" fill="url(#shield_grad)" filter="url(#shadow)" />
-  
-  <!-- Inner Detail / Shield Check -->
-  <path d="M256 160L192 224L208 240L256 192L304 240L320 224L256 160Z" fill="white" />
-  <path d="M200 280C200 280 230 310 256 310C282 310 312 280 312 280V200L256 144L200 200V280Z" fill="url(#inner_grad)" fill-opacity="0.8" />
-  
-  <!-- The Checkmark -->
-  <path d="M216 230L240 254L296 198" stroke="white" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" />
-  
-  <!-- Accent dots -->
-  <circle cx="256" cy="340" r="10" fill="white" fill-opacity="0.5" />
+  <path fill="url(#logoGradient)" fill-rule="evenodd" d="M 0 15 L 25 0 L 50 15 L 75 0 L 100 15 L 100 70 L 50 100 L 0 70 Z M 25 25 L 50 40 L 75 25 L 75 60 L 50 75 L 25 60 Z" />
 </svg>

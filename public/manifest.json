@@ -1,6 +1,15 @@
 {
   "short_name": "HSSE Tech",
   "name": "HSSE Integrated System - Meram Platform",
+  "id": "/hsse-tech-meram",
+  "description": "Platform HSE observasi lapangan terintegrasi. Laporkan, monitor, dan tindaklanjuti observasi keselamatan kerja secara real-time.",
+  "lang": "id",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities",
+    "business"
+  ],
   "icons": [
     {
       "src": "logo.svg",
@@ -22,11 +31,84 @@
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "maskable"
+    },
+    {
+      "src": "logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
-  "start_url": ".",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#0f172a",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "theme_color": "#ff5282",
   "background_color": "#0f172a",
-  "orientation": "portrait"
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Buat Laporan Baru",
+      "short_name": "Laporan",
+      "description": "Buat observasi keselamatan baru",
+      "url": "/?action=create&source=shortcut",
+      "icons": [
+        {
+          "src": "logo.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "My Tasks",
+      "short_name": "Tasks",
+      "description": "Lihat tugas yang di-assign ke saya",
+      "url": "/?tab=tasks&source=shortcut",
+      "icons": [
+        {
+          "src": "logo.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Activity Feed",
+      "short_name": "Feed",
+      "description": "Lihat semua laporan observasi",
+      "url": "/?tab=feed&source=shortcut",
+      "icons": [
+        {
+          "src": "logo.svg",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "/share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "media",
+          "accept": [
+            "image/*"
+          ]
+        }
+      ]
+    }
+  },
+  "protocol_handlers": [],
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }

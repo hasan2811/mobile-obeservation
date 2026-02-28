@@ -359,6 +359,14 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    if (action === 'deleteObservation') {
+      const result = deleteObservation(data);
+      return ContentService
+        .createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+
     // Default: Submit observation
     const result = submitObservationOptimized(data);
     return ContentService
@@ -446,6 +454,42 @@ function updateTaskOptimized(data) {
     result: 'success', 
     message: 'Action recorded successfully in row ' + rowNumber,
     proofUrl: proofUrl 
+  };
+}
+
+
+// ============================================
+// DELETE OBSERVATION (by Creator only)
+// ============================================
+function deleteObservation(data) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(SHEET_NAME);
+  const lastRow = sheet.getLastRow();
+  
+  if (lastRow < 2) {
+    return { result: 'error', message: 'No data to delete' };
+  }
+  
+  // Find the row by timestamp (same logic as updateTaskOptimized)
+  const timestamps = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
+  const targetTime = new Date(data.timestamp).getTime();
+  const rowIndex = timestamps.findIndex(t => Math.abs(new Date(t).getTime() - targetTime) < 2000);
+  
+  if (rowIndex === -1) {
+    return { result: 'error', message: 'Observation not found' };
+  }
+  
+  const rowNumber = rowIndex + 2;
+  
+  // DELETE ROW (hard delete)
+  sheet.deleteRow(rowNumber);
+  
+  // Clear cache for instant visibility
+  clearCache();
+  
+  return { 
+    result: 'success', 
+    message: 'Observation deleted successfully from row ' + rowNumber
   };
 }
 

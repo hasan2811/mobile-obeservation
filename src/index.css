@@ -20,14 +20,14 @@
   }
 
   :root.light-mode {
-    --bg-main: #f1f5f9;
-    --bg-surface: #ffffff;
-    --bg-card: #ffffff;
+    --bg-main: #ffffff;
+    --bg-surface: #f8fafc;
+    --bg-card: #f8fafc;
     --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --border-color: #e2e8f0;
-    --glass-bg: rgba(255, 255, 255, 0.7);
-    --input-bg: #f8fafc;
+    --text-secondary: #64748b;
+    --border-color: #cbd5e1;
+    --glass-bg: rgba(255, 255, 255, 0.95);
+    --input-bg: #ffffff;
   }
 
   body {
@@ -143,4 +143,43 @@
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #475569;
+}
+
+/* =========================================
+   ANIMASI DATA LOADING (Looping)
+   ========================================= */
+.hsse-loader {
+  animation: pulse-breathing 1.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.hsse-loader .goggles {
+  animation: glow 1.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes pulse-breathing {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(0.92);
+  }
+}
+
+@keyframes glow {
+
+  0%,
+  100% {
+    stroke-opacity: 1;
+    filter: drop-shadow(0 0 2px rgba(255, 82, 130, 0.3));
+  }
+
+  50% {
+    stroke-opacity: 0.5;
+    filter: drop-shadow(0 0 8px rgba(255, 82, 130, 0.9));
+  }
 }
